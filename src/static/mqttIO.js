@@ -115,18 +115,19 @@ function onMessageArrived(msg) {
         const timestamp = new Date().toLocaleTimeString();
         console.log(`[${timestamp}] ${msg.destinationName}: ${value}`);
         
+        // HTML 요소 업데이트
         switch(msg.destinationName) {
             case "temperature":
                 document.getElementById("temperature").textContent = value.toFixed(1) + "°C";
+                addChartData(0, value); // 온도 데이터 추가 (첫 번째 데이터셋)
                 break;
             case "humidity":
                 document.getElementById("humidity").textContent = value.toFixed(1) + "%";
+                addChartData(1, value); // 습도 데이터 추가 (두 번째 데이터셋)
                 break;
             case "light":
                 document.getElementById("light").textContent = value.toFixed(1) + "%";
-                break;
-            case "ultrasonic":
-                addChartData(value);
+                addChartData(2, value); // 조도 데이터 추가 (세 번째 데이터셋)
                 break;
         }
     } catch (e) {

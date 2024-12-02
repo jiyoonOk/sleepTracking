@@ -97,50 +97,51 @@ let config = {
 let LABEL_SIZE = 20;
 let tick = 0;
 
-function drawSleepChart() {
+function drawChart() {
     ctx = document.getElementById('sleepChart').getContext('2d');
     chart = new Chart(ctx, config);
-    initSleepChart();
+    init();
 }
 
-function initSleepChart() {
+function init() {
     const now = new Date();
     for(let i=0; i<LABEL_SIZE; i++) {
-        chart.data.labels[i] = formatTime(new Date(now - (LABEL_SIZE - i) * 1000));
+        chart.data.labels[i] = new Date(now - (LABEL_SIZE - i) * 1000).toLocaleTimeString('ko-KR', {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+        });
     }
     chart.update();
 }
 
-function formatTime(date) {
-    return date.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit' 
-    });
-}
-
-function updateSleepChart(temperature, humidity, light) {
+function addChartData(datasetIndex, value) {
     if (!chart || !chart.data || !chart.data.datasets) {
         console.error("차트가 초기화되지 않음");
         return;
     }
-
-    const now = new Date();
-    const timeStr = formatTime(now);
-
+    
     try {
-        chart.data.datasets.forEach((dataset, index) => {
-            const value = index === 0 ? temperature : 
-                         index === 1 ? humidity : light;
+        const dataset = chart.data.datasets[datasetIndex];
+        const n = dataset.data.length;
+        
+        if(n < LABEL_SIZE) {
+            dataset.data.push(value);
+        } else {
+            dataset.data.push(value);
+            dataset.data.shift();
             
-            if (dataset.data.length >= LABEL_SIZE) {
-                dataset.data.shift();
+            // 모든 데이터셋이 같은 레이블을 공유하므로 한 번만 업데이트
+            if(datasetIndex === 0) {
+                chart.data.labels.push(new Date().toLocaleTimeString('ko-KR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }));
                 chart.data.labels.shift();
             }
-            dataset.data.push(value);
-        });
-
-        chart.data.labels.push(timeStr);
+        }
+        
         chart.update();
     } catch (e) {
         console.error("차트 데이터 추가 중 에러:", e);
