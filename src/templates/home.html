@@ -1,0 +1,274 @@
+<!-- 홈 페이지 -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>스마트 수면 관리 시스템</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.2/mqttws31.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>      
+    <script src="./static/realTimeChart.js" type="text/javascript"></script>      
+    <script src="./static/mqttIO.js" type="text/javascript"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-content">
+            <a href="/" class="logo">🌙 스마트 수면 관리</a>
+            <nav class="nav-menu">
+                <a href="/" class="active">홈</a>
+                <a href="/dashboard">대시보드</a>
+                <a href="/settings">설정</a>
+                <a href="/help">도움말</a>
+            </nav>
+        </div>
+    </header>
+    
+    <!-- MQTT 브로커 연결 정보 (숨김 처리) -->
+    <div style="display: none;">
+        <input id="broker" type="text" name="broker" value="">
+        <div id="messages"></div>
+    </div>
+
+    <main class="container dashboard-grid">
+        <div class="status-panel">
+            <h2>현재 상태</h2>
+            <div class="status-grid">
+                <div class="status-item">
+                    <h3>온도</h3>
+                    <p id="temperature">--°C</p>
+                </div>
+                <div class="status-item">
+                    <h3>습도</h3>
+                    <p id="humidity">--%</p>
+                </div>
+                <div class="status-item">
+                    <h3>조도</h3>
+                    <p id="light">--lux</p>
+                </div>
+            </div>
+            <div class="alert alert-warning">
+                <p>💡 현재 온도가 적정 범위를 벗어났습니다. 19°C로 설정하는 것을 추천합니다.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>수면 모드 제어</h2>
+            <button id="sleepModeBtn" class="btn btn-primary btn-large" onclick="toggleSleepMode()">
+                수면 모드 활성화
+            </button>
+            <div class="sleep-mode-message">
+                <p>수면 환경을 모니터링 중입니다.</p>
+                <div class="sleep-timer" id="sleepTimer">00:00:00</div>
+            </div>
+            <div class="wake-up-settings">
+                <div class="time-setting">
+                    <label>기상 시간</label>
+                    <input type="time" id="wakeUpTime">
+                </div>
+                <div class="alarm-setting">
+                    <label>알람 소리</label>
+                    <select id="alarmSound">
+                        <option value="gentle">부드러운 음악</option>
+                        <option value="nature">자연의 소리</option>
+                        <option value="birds">새소리</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>IoT 장치 제어</h2>
+            
+            <!-- LED 제어 -->
+            <div class="device-control">
+                <h3>조명 제어</h3>
+                <div class="control-group">
+                    <div class="led-control">
+                        <label>흰색 LED</label>
+                        <input type="range" id="whiteLED" min="0" max="100" value="0" 
+                            oninput="updateLED('white', this.value)">
+                        <span id="whiteLEDValue">0%</span>
+                    </div>
+                    <div class="led-control">
+                        <label>노란색 LED</label>
+                        <input type="range" id="yellowLED" min="0" max="100" value="0" 
+                            oninput="updateLED('yellow', this.value)">
+                        <span id="yellowLEDValue">0%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 가습기 제어 -->
+            <div class="device-control small-control">
+                <h3>가습기</h3>
+                <button id="humidifierBtn" class="btn" onclick="toggleHumidifier()">
+                    On
+                </button>
+            </div>
+
+            <!-- 선풍기 제어 -->
+            <div class="device-control small-control">
+                <h3>선풍기</h3>
+                <button id="fanBtn" class="btn" onclick="toggleFan()">
+                    On
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid sleep-mode-components" style="display: none;">
+            <!-- 실시간 수면 분석 그래프 -->
+            <div class="card">
+                <h2>수면 상태 분석</h2>
+                <div class="chart-container">
+                    <canvas id="sleepChart"></canvas>
+                </div>
+            </div>
+
+            <!-- CCTV 화면 -->
+            <div class="card">
+                <h2>CCTV 모니터링</h2>
+                <div class="cctv-container">
+                    <img id="cctvFeed" src="/video_feed" alt="CCTV 피드">
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container footer-content">
+            <p>© 2024 스마트 수면 관리 시스템 | 모든 권리 보유</p>
+        </div>
+    </footer>
+
+    <script>
+        // 전역 변수 선언
+        let sleepModeActive = false;
+        let sleepStartTime = null;
+        let timerInterval = null;
+
+        function toggleSleepMode() {
+            const btn = document.getElementById('sleepModeBtn');
+            const sleepComponents = document.querySelector('.sleep-mode-components');
+            sleepModeActive = !sleepModeActive;
+            
+            if (sleepModeActive) {
+                // 수면 모드 활성화
+                document.body.classList.add('sleep-mode');
+                btn.textContent = "수면 모드 비활성화";
+                sleepComponents.style.display = 'grid';
+                
+                // LED 끄기
+                updateLED('white', 0);
+                updateLED('yellow', 0);
+                
+                // 타이머 시작
+                startTimer();
+                startSleepMonitoring();
+            } else {
+                // 수면 모드 비활성화
+                document.body.classList.remove('sleep-mode');
+                btn.textContent = "수면 모드 활성화";
+                sleepComponents.style.display = 'none';
+                stopSleepMonitoring();
+                
+                // 타이머 정지
+                stopTimer();
+            }
+        }
+
+        function startTimer() {
+            // 이전 타이머가 있다면 정지
+            stopTimer();
+            
+            // 시작 시간 설정
+            sleepStartTime = Date.now();
+            
+            // 초기값 표시
+            document.getElementById('sleepTimer').textContent = "00:00:00";
+            
+            // 타이머 시작
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            sleepStartTime = null;
+        }
+
+        function updateTimer() {
+            if (!sleepStartTime) return;
+            
+            const currentTime = Date.now();
+            const elapsedTime = currentTime - sleepStartTime;
+            
+            const hours = Math.floor(elapsedTime / 3600000);
+            const minutes = Math.floor((elapsedTime % 3600000) / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            
+            const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            document.getElementById('sleepTimer').textContent = timeString;
+        }
+
+        function startSleepMonitoring() {
+            // 환경 모니터링 시작
+            setInterval(checkEnvironment, 5000);
+        }
+
+        function checkEnvironment() {
+            const temp = parseFloat(document.getElementById('temperature').textContent);
+            const humidity = parseFloat(document.getElementById('humidity').textContent);
+            
+            // 온습도 체크 및 자동 제어
+            if (temp > 26) toggleFan(true);
+            if (humidity < 40) toggleHumidifier(true);
+        }
+
+        window.addEventListener("load", drawChart);
+        window.addEventListener("load", function () {
+            const brokerInput = document.getElementById("broker");
+            if (brokerInput) {
+                brokerInput.value = "172.20.10.5";
+                connect();  // MQTT 연결만 시도
+            } else {
+                console.error("Broker input element not found");
+            }
+        });
+
+        // IoT 장치 제어 함수들
+        function updateLED(color, value) {
+            console.log(`LED 제어 시도: ${color}, ${value}`);
+            if(!connectionFlag) {
+                console.error('MQTT 연결 안됨');
+                return;
+            }
+            publish(`led/${color}`, value);
+        }
+
+        function toggleHumidifier() {
+            const btn = document.getElementById('humidifierBtn');
+            const isOn = btn.textContent.includes('Off');
+            
+            btn.textContent = isOn ? 'On' : 'Off';
+            btn.classList.toggle('btn-primary');
+            
+            // MQTT로 가습기 제어 메시지 전송
+            publish('servo/humidifier', isOn ? '0' : '1');
+        }
+
+        function toggleFan() {
+            const btn = document.getElementById('fanBtn');
+            const isOn = btn.textContent.includes('Off');
+            
+            btn.textContent = isOn ? 'On' : 'Off';
+            btn.classList.toggle('btn-primary');
+            
+            // MQTT로 선풍기 제어 메시지 전송
+            publish('servo/fan', isOn ? '0' : '1');
+        }
+    </script>
+</body>
+</html>

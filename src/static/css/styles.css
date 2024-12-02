@@ -1,0 +1,508 @@
+/* 공통 변수 정의 - 전역에서 사용되는 색상, 그림자, 테두리 값 */
+:root {
+    --primary-color: #4A90E2;    /* 주요 강조색 */
+    --secondary-color: #4CAF50;  /* 보조 강조색 */
+    --background-color: #f5f5f5; /* 기본 배경색 */
+    --text-color: #333;         /* 기본 텍스트 색상 */
+    --error-color: #ff4444;     /* 오류 표시 색상 */
+    --success-color: #00C851;   /* 성공 표시 색상 */
+    --warning-color: #ffbb33;   /* 경고 표시 색상 */
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);  /* 작은 그림자 효과 */
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);  /* 중간 그림자 효과 */
+    --border-radius: 8px;       /* 공통 테두리 둥글기 */
+}
+
+/* 기본 스타일 초기화 및 글꼴 설정 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* 기본 body 스타일 - 글꼴, 배경색, 텍스트 설정 */
+body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    transition: all 0.5s ease;
+}
+
+/* 수면 모드 활성화 시 전체 페이지 스타일 */
+body.sleep-mode {
+    background-color: #121212;
+    color: rgba(255, 255, 255, 0.87);
+}
+
+/* 수면 모드에서의 카드, 상태 패널, 헤더 스타일 */
+.sleep-mode .card,
+.sleep-mode .status-panel,
+.sleep-mode .header {
+    background-color: #1e1e1e;
+    transition: all 0.5s ease;
+}
+
+/* 수면 모드 메시지 컨테이너 기본 스타일 */
+.sleep-mode-message {
+    text-align: center;
+    padding: 1rem;
+    background-color: rgba(74, 144, 226, 0.1);
+    border-radius: var(--border-radius);
+    margin: 1rem 0;
+    display: none;
+}
+
+/* 수면 모드 활성화 시 메시지 표시 */
+.sleep-mode .sleep-mode-message {
+    display: block;
+}
+
+/* 수면 타이머 스타일 */
+.sleep-timer {
+    font-size: 2rem;
+    font-weight: bold;
+    text-align: center;
+    margin: 1rem 0;
+    color: var(--primary-color);
+}
+
+/* 레이아웃 컴포넌트 */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* 헤더 스타일 */
+.header {
+    background-color: white;
+    padding: 1rem 0;
+    box-shadow: var(--shadow-sm);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+/* 헤더 내부 컨텐츠 스타일 */
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* 로고 스타일 */
+.logo {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+/* 네비게이션 메뉴 스타일 */
+.nav-menu {
+    display: flex;
+    gap: 2rem;
+}
+
+/* 네비게이션 메뉴 아이템 스타일 */
+.nav-menu a {
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius);
+    transition: background-color 0.3s;
+}
+
+/* 네비게이션 메뉴 아이템 호버 스타일 */
+.nav-menu a:hover {
+    background-color: var(--background-color);
+}
+
+/* 활성화된 네비게이션 메뉴 아이템 스타일 */
+.nav-menu a.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* 카드 컴포넌트 */
+.card {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+    margin-bottom: 2rem;
+    overflow: hidden;
+}
+
+/* 대시보드 그리드 레이아웃 */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+/* 상태 표시 컴포넌트 */
+.status-panel {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-md);
+}
+
+/* 상태 그리드 레이아웃 */
+.status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+/* 상태 아이템 스타일 */
+.status-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+/* 버튼 스타일 */
+.btn {
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+/* 주요 버튼 스타일 */
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* 주요 버튼 호버 스타일 */
+.btn-primary:hover {
+    background-color: #3578c7;
+}
+
+/* 큰 버튼 스타일 */
+.btn-large {
+    width: 100%;
+    padding: 1.5rem;
+    font-size: 1.2rem;
+}
+
+/* 알림 메시지 스타일 */
+.alert {
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: var(--border-radius);
+    position: relative;  /* 위치 기준점 설정 */
+}
+
+.alert-warning {
+    background-color: var(--warning-color);
+    color: white;
+    margin-top: 0;  /* 상단 여백 제거 */
+}
+
+/* 수면 모드에서의 경고 알림 스타일 */
+.sleep-mode .alert-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: rgba(255, 255, 255, 0.87);
+    margin-top: 0;  /* 상단 여백 제거 유지 */
+}
+
+/* 상태 패널 내부의 경고 알림 위치 고정 */
+.status-panel .alert-warning {
+    margin-top: 1rem;  /* 상단 여백 통일 */
+    margin-bottom: 0;  /* 하단 여백 제거 */
+}
+
+/* 수면 모드에서도 동일한 위치 유지 */
+.sleep-mode .status-panel .alert-warning {
+    margin-top: 1rem;
+    margin-bottom: 0;
+}
+
+/* 성공 알림 스타일 */
+.alert-success {
+    background-color: var(--success-color);
+    color: white;
+}
+
+/* 오류 알림 스타일 */
+.alert-error {
+    background-color: var(--error-color);
+    color: white;
+}
+
+/* 차트 컨테이너 */
+.chart-container {
+    width: 100%;
+    margin: 1rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+/* 푸터 스타일 */
+.footer {
+    background: white;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    border-top: 1px solid #eee;
+}
+
+/* 푸터 내부 컨텐츠 스타일 */
+.footer-content {
+    text-align: center;
+    color: #666;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .nav-menu {
+        display: none;
+    }
+    
+    .status-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 다크 모드 지원 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --background-color: #1a1a1a;
+        --text-color: #ffffff;
+    }
+    
+    .card, .status-panel, .header {
+        background-color: #2d2d2d;
+    }
+}
+
+/* IoT 장치 제어 스타일 */
+.card {
+    padding: 2rem;
+}
+
+/* 장치 제어 컨테이너 */
+.device-control {
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    background-color: var(--background-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-sm);
+}
+
+/* LED 제어 패널 스타일 */
+.device-control:first-child {
+    margin-bottom: 2rem;
+    background-color: white;
+}
+
+/* 가습기, 선풍기 컨트롤 패널 공통 스타일 */
+.device-control.small-control {
+    width: calc(50% - 0.2rem);
+    display: inline-block;
+    vertical-align: top;
+    margin-bottom: 1rem;
+    background-color: white;
+    text-align: center;
+}
+
+/* 첫 번째 small-control 요소 여백 설정 */
+.device-control.small-control:first-of-type {
+    margin-right: 0.4rem;
+}
+
+/* small-control 내부 제목 스타일 */
+.device-control.small-control h3 {
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* small-control 내부 버튼 스타일 */
+.device-control.small-control .btn {
+    width: 100%;
+    display: block;
+    padding: 0.8rem;
+    font-size: 1rem;
+}
+
+/* LED 슬라이더 컨트롤 그룹 스타일 */
+.control-group {
+    margin-bottom: 1rem;
+}
+
+/* LED 슬라이더 컨테이너 스타일 */
+.led-control {
+    display: grid;
+    grid-template-columns: 80px 1fr 50px;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.5rem;
+}
+
+/* LED 슬라이더 레이블 스타일 */
+.led-control label {
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+/* LED 슬라이더 입력 요소 스타일 */
+.led-control input[type="range"] {
+    width: 100%;
+    height: 2rem;
+}
+
+/* LED 슬라이더 값 표시 스타일 */
+.led-control span {
+    text-align: right;
+    font-weight: 500;
+    color: var(--primary-color);
+    font-size: 0.95rem;
+}
+
+/* 수면 모드에서의 상태 아이템과 메시지 스타일 */
+.sleep-mode .status-item,
+.sleep-mode .sleep-mode-message {
+    background-color: rgba(74, 144, 226, 0.1);
+    color: rgba(255, 255, 255, 0.87);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+/* 수면 모드에서의 장치 제어 패널 스타일 */
+.sleep-mode .device-control {
+    background-color: rgba(74, 144, 226, 0.1);
+    color: rgba(255, 255, 255, 0.87);
+}
+
+/* 수면 모드 컴포넌트 스타일 */
+.sleep-mode-components {
+    display: none;
+    width: 100%;  /* 전체 너비 사용 */
+    grid-template-columns: 2fr 1fr;  /* 2:1 비율로 설정 */
+    gap: 1.5rem;
+    margin: 0;  /* 마진 제거 */
+}
+
+/* 대시보드 그리드에서 수면 모드 컴포넌트가 있을 때의 스타일 */
+.dashboard-grid .sleep-mode-components {
+    grid-column: 1 / -1;  /* 전체 너비 사용 */
+}
+
+/* 수면 상태 분석과 CCTV 모니터링을 한 줄로 표시 */
+.sleep-mode-components .card:nth-child(1),
+.sleep-mode-components .card:nth-child(2) {
+    grid-column: span 1;  /* 각각 한 칸씩 차지 */
+}
+
+/* IoT 상태는 전체 너비 사용 */
+.sleep-mode-components .card:nth-child(3) {
+    grid-column: 1 / -1;  /* 전체 너비 사용 */
+}
+
+/* CCTV 컨테이너와 차트 컨테이너의 높이 통일 */
+.cctv-container,
+.chart-container {
+    height: 400px;
+    margin: 0;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .sleep-mode-components {
+        grid-template-columns: 1fr;  /* 모바일에서는 한 열로 표시 */
+    }
+    
+    .sleep-mode-components .card {
+        grid-column: 1 / -1;  /* 모든 카드가 전체 너비 사용 */
+    }
+}
+
+/* CCTV 컨테이너 스타일 */
+.cctv-container {
+    width: 100%;
+    height: 300px;
+    background: #000;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.cctv-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* 장치 상태 그리드 스타일 */
+.device-status-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+.device-status-item {
+    text-align: center;
+    padding: 1rem;
+    background: var(--background-color);
+    border-radius: var(--border-radius);
+}
+
+/* 기상 설정 스타일 */
+.wake-up-settings {
+    display: none;  /* 기본적으로 숨김 */
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* 수면 모드일 때만 표시 */
+.sleep-mode .wake-up-settings {
+    display: flex;
+}
+
+.time-setting, .alarm-setting {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: rgba(74, 144, 226, 0.1);  /* 수면 모드와 동일한 배경색 */
+    border-radius: var(--border-radius);
+    color: rgba(255, 255, 255, 0.87);  /* 수면 모드와 동일한 텍스트 색상 */
+}
+
+/* 수면 모드에서의 입력 요소 스타일 */
+.sleep-mode .time-setting input,
+.sleep-mode .alarm-setting select {
+    background-color: #2d2d2d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.87);
+    padding: 0.5rem;
+    border-radius: var(--border-radius);
+}
+
+/* 수면 모드에서의 레이블 스타일 */
+.sleep-mode .time-setting label,
+.sleep-mode .alarm-setting label {
+    color: rgba(255, 255, 255, 0.87);
+    font-weight: 500;
+}
