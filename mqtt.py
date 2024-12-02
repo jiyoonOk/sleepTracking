@@ -16,20 +16,21 @@ def on_connect(client, userdata, flag, rc, prop=None):
 def on_message(client, userdata, msg):
 	topic = msg.topic
 	payload = msg.payload.decode()
-	print(f"DEBUG - Received message: {payload} on topic: {topic}")
+	current_time = time.strftime("%H:%M:%S")
+	print(f"[{current_time}] 메시지 수신: {payload} (토픽: {topic})")
 	
 	# 초기 상태값 요청 처리
-	if topic == "request/temperature":
-		temperature, _ = circuit.measure_temperature_humidity()
-		if temperature is not None:
-			client.publish("temperature", temperature)
-	elif topic == "request/humidity":
-		_, humidity = circuit.measure_temperature_humidity()
-		if humidity is not None:
-			client.publish("humidity", humidity)
+	if topic == "request/temperature" or topic == "request/humidity":
+		temperature, humidity = circuit.measure_temperature_humidity()
+		if temperature is not None and humidity is not None:
+			client.publish("temperature", f"{temperature:.1f}")
+			client.publish("humidity", f"{humidity:.1f}")
+			print(f"[{current_time}] 온습도 발행: {temperature:.1f}°C, {humidity:.1f}%")
 	elif topic == "request/light":
 		light = circuit.measure_light()
-		client.publish("light", light)
+		if light is not None:
+			client.publish("light", light)
+			print(f"[{current_time}] 조도 발행: {light}%")
 	# 기존 코드는 그대로 유지
 	elif topic == "led/white":
 		brightness = int(payload)
@@ -56,19 +57,35 @@ try:
 	
 	while True:
 		try:
-			distance = circuit.measure_distance()
+			current_time = time.strftime("%H:%M:%S")
+			print(f"\n[{current_time}] === 센서 측정 시작 ===")
+			
+			# 온습도 측정 및 발행
 			temperature, humidity = circuit.measure_temperature_humidity()
-			light = circuit.measure_light()
-			
-			client.publish("ultrasonic", distance)
 			if temperature is not None and humidity is not None:
-				client.publish("temperature", temperature)
-				client.publish("humidity", humidity)
-			client.publish("light", light)
+				client.publish("temperature", f"{temperature:.1f}")
+				client.publish("humidity", f"{humidity:.1f}")
+				print(f"[{current_time}] 온습도 발행 완료: {temperature:.1f}°C, {humidity:.1f}%")
+			else:
+				print(f"[{current_time}] 온습도 측정 실패")
 			
-			time.sleep(0.5)
+			# 나머지 센서 측정 및 발행
+			distance = circuit.measure_distance()
+			if distance is not None:
+				client.publish("ultrasonic", distance)
+				print(f"[{current_time}] 거리 발행: {distance}cm")
+			
+			light = circuit.measure_light()
+			if light is not None:
+				client.publish("light", light)
+				print(f"[{current_time}] 조도 발행: {light}%")
+			
+			print(f"[{current_time}] === 센서 측정 완료 ===")
+			time.sleep(0.2)
+			
 		except Exception as e:
-			print(f"Error reading sensors: {e}")
+			print(f"[{current_time}] 에러 발생: {str(e)}")
+			print(f"[{current_time}] 에러 타입: {type(e).__name__}")
 			time.sleep(1)
 			
 except KeyboardInterrupt:

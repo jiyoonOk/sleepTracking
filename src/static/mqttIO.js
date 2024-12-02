@@ -104,27 +104,34 @@ function onConnectionLost(responseObject) { // responseObject는 응답 패킷
 }
 
 // 메시지가 도착할 때 호출되는 함수
-function onMessageArrived(msg) { // 매개변수 msg는 도착한 MQTT 메시지를 담고 있는 객체
-	console.log("onMessageArrived: " + msg.payloadString);
-	
-	// 토픽에 따라 다른 처리
-	switch(msg.destinationName) {
-		case "temperature":
-			document.getElementById("temperature").textContent = 
-				parseFloat(msg.payloadString).toFixed(1) + "°C";
-			break;
-		case "humidity":
-			document.getElementById("humidity").textContent = 
-				parseFloat(msg.payloadString).toFixed(1) + "%";
-			break;
-		case "light":
-			document.getElementById("light").textContent = 
-				parseFloat(msg.payloadString).toFixed(1) + "lux";
-			break;
-		case "ultrasonic":
-			addChartData(parseFloat(msg.payloadString));
-			break;
-	}
+function onMessageArrived(msg) {
+    try {
+        const value = parseFloat(msg.payloadString);
+        if (isNaN(value)) {
+            console.error("유효하지 않은 값:", msg.payloadString);
+            return;
+        }
+        
+        const timestamp = new Date().toLocaleTimeString();
+        console.log(`[${timestamp}] ${msg.destinationName}: ${value}`);
+        
+        switch(msg.destinationName) {
+            case "temperature":
+                document.getElementById("temperature").textContent = value.toFixed(1) + "°C";
+                break;
+            case "humidity":
+                document.getElementById("humidity").textContent = value.toFixed(1) + "%";
+                break;
+            case "light":
+                document.getElementById("light").textContent = value.toFixed(1) + "%";
+                break;
+            case "ultrasonic":
+                addChartData(value);
+                break;
+        }
+    } catch (e) {
+        console.error("메시지 처리 중 에러:", e);
+    }
 }
 // disconnection 버튼이 선택되었을 때 호출되는 함수
 function disconnect() {

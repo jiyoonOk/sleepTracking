@@ -1,18 +1,22 @@
 # 센서 및 하드웨어 제어 코드
 import time
 import RPi.GPIO as GPIO
-import Adafruit_DHT
-from gpiozero import LightSensor
-import spidev
-from smbus2 import SMBus
+import Adafruit_MCP3008
+from adafruit_htu21d import HTU21D
+import busio
 
 # GPIO 설정
 GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 # I2C 설정 (온습도 센서용)
-i2c = SMBus(1)  # SMBus로 변경
-DHT_PIN = 2  # SDA
+sda = 2  # GPIO2 핀
+scl = 3  # GPIO3 핀
+i2c = busio.I2C(scl, sda)
+sensor = HTU21D(i2c)  # HTU21D 온습도 센서 객체
+
+# 조도 센서 설정 (MCP3008 ADC)
+mcp = Adafruit_MCP3008.MCP3008(clk=11, cs=8, miso=9, mosi=10)
 
 # LED 설정
 LED_WHITE = 5
@@ -29,15 +33,6 @@ TRIG = 20
 ECHO = 16
 GPIO.setup(TRIG, GPIO.OUT)
 GPIO.setup(ECHO, GPIO.IN)
-
-# 온습도 센서 설정 (DHT22)
-DHT_SENSOR = Adafruit_DHT.DHT22
-
-# 조도 센서 설정 (MCP3202 ADC를 통해)
-spi = spidev.SpiDev()
-spi.open(0, 0)  # SPI 버스 0, CE0(GPIO8) 사용
-spi.max_speed_hz = 1000000  # 1MHz
-spi.mode = 0
 
 # 서보모터 설정
 SERVO = 18
@@ -62,16 +57,52 @@ def read_adc(channel):
 
 def measure_light():
     """조도 센서 값 읽기 (0-100%)"""
-    adc_value = read_adc(0)  # channel 0 사용
-    light_percentage = (adc_value / 4095.0) * 100.0  # 12비트 ADC
-    return round(light_percentage, 2)
+    try:
+        current_time = time.strftime("%H:%M:%S")
+        print(f"\n[{current_time}] 조도 센서 측정 시작")
+        
+        adc_value = mcp.read_adc(0)
+        if adc_value is None:
+            print(f"[{current_time}] 조도 센서 읽기 실패: ADC 값이 None")
+            return None
+            
+        light_percentage = (adc_value / 1023.0) * 100.0
+        print(f"[{current_time}] 측정 성공 - ADC값: {adc_value}, 조도: {light_percentage}%")
+        return round(light_percentage, 2)
+        
+    except Exception as e:
+        print(f"[{current_time}] 조도 센서 에러: {str(e)}")
+        print(f"[{current_time}] 에러 타입: {type(e).__name__}")
+        return None
+
+def getTemperature(sensor):
+    """센서로부터 온도 값 수신 함수"""
+    temp = float(sensor.temperature)
+    print(f"현재 온도는 {temp:.1f}°C")
+    return temp
+
+def getHumidity(sensor):
+    """센서로부터 습도 값 수신 함수"""
+    humid = float(sensor.relative_humidity)
+    print(f"현재 습도는 {humid:.1f}%")
+    return humid
 
 def measure_temperature_humidity():
     """온습도 센서 값 읽기"""
-    humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
-    if humidity is not None and temperature is not None:
+    try:
+        current_time = time.strftime("%H:%M:%S")
+        print(f"\n[{current_time}] === 온습도 센서 측정 시작 ===")
+        
+        temperature = getTemperature(sensor)
+        humidity = getHumidity(sensor)
+        
+        print(f"[{current_time}] === 온습도 센서 측정 완료 ===")
         return temperature, humidity
-    return None, None
+        
+    except Exception as e:
+        print(f"[{current_time}] 온습도 센서 에러: {str(e)}")
+        print(f"[{current_time}] 에러 타입: {type(e).__name__}")
+        return None, None
 
 def measure_distance():
     """초음파 센서로 거리 측정"""
@@ -121,3 +152,4 @@ def cleanup():
     led_yellow_pwm.stop()
     GPIO.cleanup()
     spi.close()
+
