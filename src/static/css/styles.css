@@ -201,13 +201,12 @@ body.sleep-mode {
     padding: 1rem;
     margin: 1rem 0;
     border-radius: var(--border-radius);
-    position: relative;  /* 위치 기준점 설정 */
+    box-shadow: var(--shadow-sm);
 }
 
 .alert-warning {
     background-color: var(--warning-color);
-    color: white;
-    margin-top: 0;  /* 상단 여백 제거 */
+    color: #333;
 }
 
 /* 수면 모드에서의 경고 알림 스타일 */
@@ -505,4 +504,9 @@ body.sleep-mode {
 .sleep-mode .alarm-setting label {
     color: rgba(255, 255, 255, 0.87);
     font-weight: 500;
+}
+
+.alert p {
+    margin: 0;
+    line-height: 1.5;
 }

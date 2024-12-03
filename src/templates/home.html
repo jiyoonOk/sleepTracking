@@ -221,10 +221,60 @@
         function checkEnvironment() {
             const temp = parseFloat(document.getElementById('temperature').textContent);
             const humidity = parseFloat(document.getElementById('humidity').textContent);
+            const alertDiv = document.querySelector('.alert');
             
-            // 온습도 체크 및 자동 제어
-            if (temp > 26) toggleFan(true);
-            if (humidity < 40) toggleHumidifier(true);
+            // 온도와 습도 상태 확인
+            let message = '';
+            
+            // 온도 체크
+            if (temp < 15 || temp > 22.5) {
+                const recommendTemp = 19;
+                message = `💡 현재 온도가 적정 범위를 벗어났습니다. ${recommendTemp}°C로 설정하는 것을 추천합니다.`;
+                alertDiv.className = 'alert alert-warning';
+            }
+            
+            // 습도 체크
+            if (humidity < 30 || humidity > 60) {
+                const recommendHumidity = 45;
+                if (message) message += '<br>';
+                message += `💡 현재 습도가 적정 범위를 벗어났습니다. ${recommendHumidity}%로 설정하는 것을 추천합니다.`;
+                alertDiv.className = 'alert alert-warning';
+            }
+            
+            // 모든 조건이 정상일 때
+            if (!message) {
+                message = '✨ 현재 실내 환경이 쾌적합니다.';
+                alertDiv.className = 'alert alert-success';
+            }
+            
+            alertDiv.innerHTML = `<p>${message}</p>`;
+            
+            // 자동 제어 로직
+            // 온도에 따른 선풍기 제어
+            if (temp > 25) {
+                const fanBtn = document.getElementById('fanBtn');
+                if (fanBtn.textContent.includes('On')) {
+                    toggleFan();
+                }
+            } else if (temp <= 24) {
+                const fanBtn = document.getElementById('fanBtn');
+                if (fanBtn.textContent.includes('Off')) {
+                    toggleFan();
+                }
+            }
+            
+            // 습도에 따른 가습기 제어
+            if (humidity < 30) {
+                const humidifierBtn = document.getElementById('humidifierBtn');
+                if (humidifierBtn.textContent.includes('On')) {
+                    toggleHumidifier();
+                }
+            } else if (humidity >= 50) {
+                const humidifierBtn = document.getElementById('humidifierBtn');
+                if (humidifierBtn.textContent.includes('Off')) {
+                    toggleHumidifier();
+                }
+            }
         }
 
         window.addEventListener("load", drawChart);
@@ -281,18 +331,21 @@
                 const timestamp = new Date().toLocaleTimeString();
                 console.log(`[${timestamp}] ${msg.destinationName}: ${value}`);
                 
+                // HTML 요소 업데이트
                 switch(msg.destinationName) {
                     case "temperature":
                         document.getElementById("temperature").textContent = value.toFixed(1) + "°C";
-                        addChartData(0, value); // 온도 데이터 추가 (첫 번째 데이터셋)
+                        addChartData(0, value);
+                        checkEnvironment(); // 환경 체크 추가
                         break;
                     case "humidity":
                         document.getElementById("humidity").textContent = value.toFixed(1) + "%";
-                        addChartData(1, value); // 습도 데이터 추가 (두 번째 데이터셋)
+                        addChartData(1, value);
+                        checkEnvironment(); // 환경 체크 추가
                         break;
                     case "light":
                         document.getElementById("light").textContent = value.toFixed(1) + "%";
-                        addChartData(2, value); // 조도 데이터 추가 (세 번째 데이터셋)
+                        addChartData(2, value);
                         break;
                 }
             } catch (e) {

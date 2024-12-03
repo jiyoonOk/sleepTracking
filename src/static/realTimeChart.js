@@ -49,7 +49,7 @@ let config = {
                     position: 'left',
                     ticks: {
                         min: 0,
-                        max: 40,
+                        max: 50,
                         fontColor: 'rgb(255, 99, 132)'
                     },
                     scaleLabel: {
