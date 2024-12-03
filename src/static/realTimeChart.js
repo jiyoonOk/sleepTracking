@@ -95,7 +95,6 @@ let config = {
 };
 
 let LABEL_SIZE = 20;
-let tick = 0;
 
 function drawChart() {
     ctx = document.getElementById('sleepChart').getContext('2d');

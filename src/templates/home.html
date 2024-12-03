@@ -23,12 +23,6 @@
         </div>
     </header>
     
-    <!-- MQTT 브로커 연결 정보 (숨김 처리) -->
-    <div style="display: none;">
-        <input id="broker" type="text" name="broker" value="">
-        <div id="messages"></div>
-    </div>
-
     <main class="container dashboard-grid">
         <div class="status-panel">
             <h2>현재 상태</h2>
@@ -68,11 +62,14 @@
                 <div class="alarm-setting">
                     <label>알람 소리</label>
                     <select id="alarmSound">
-                        <option value="gentle">부드러운 음악</option>
-                        <option value="nature">자연의 소리</option>
-                        <option value="birds">새소리</option>
+                        <option value="christmas">크리스마스 멜로디</option>
+                        <option value="soft_calm">잔잔한 음악</option>
+                        <option value="summer_morning">상쾌한 아침</option>
                     </select>
                 </div>
+                <button id="saveAlarmBtn" class="btn btn-primary" onclick="saveAlarmSettings()">
+                    알람 설정 저장
+                </button>
             </div>
         </div>
 
@@ -141,11 +138,28 @@
         </div>
     </footer>
 
+    <!-- 알람 모달 추가 -->
+    <div id="alarmModal" class="modal">
+        <div class="modal-content">
+            <h2>기상 시간입니다! 😊</h2>
+            <p>좋은 아침입니다.</p>
+            <button class="btn btn-primary" onclick="stopAlarm()">알람 끄기</button>
+        </div>
+    </div>
+
+    <!-- MQTT 브로커 연결 정보 (숨김 처리) -->
+    <div style="display: none;">
+        <input id="broker" type="text" name="broker" value="">
+        <div id="messages"></div>
+    </div>
+
     <script>
         // 전역 변수 선언
         let sleepModeActive = false;
         let sleepStartTime = null;
         let timerInterval = null;
+        let alarmTimeout = null;
+        let alarmAudio = new Audio();
 
         function toggleSleepMode() {
             const btn = document.getElementById('sleepModeBtn');
@@ -351,6 +365,57 @@
             } catch (e) {
                 console.error("메시지 처리 중 에러:", e);
             }
+        }
+
+        function saveAlarmSettings() {
+            const wakeUpTime = document.getElementById('wakeUpTime').value;
+            const alarmSound = document.getElementById('alarmSound').value;
+            
+            if (!wakeUpTime) {
+                alert('기상 시간을 설정해주세요.');
+                return;
+            }
+            
+            // 현재 설정된 알람 취소
+            if (alarmTimeout) {
+                clearTimeout(alarmTimeout);
+            }
+            
+            // 알람 소리 설정
+            const soundFiles = {
+                'christmas': '/static/sounds/christmas.mp3',
+                'soft_calm': '/static/sounds/soft_calm.mp3',
+                'summer_morning': '/static/sounds/summer_morning.mp3'
+            };
+            alarmAudio.src = soundFiles[alarmSound];
+            alarmAudio.loop = true;  // 알람 소리 반복 재생
+            
+            // 알람 시간 설정 (기존 코드와 동일)
+            const [hours, minutes] = wakeUpTime.split(':');
+            const now = new Date();
+            const alarmTime = new Date();
+            alarmTime.setHours(parseInt(hours));
+            alarmTime.setMinutes(parseInt(minutes));
+            alarmTime.setSeconds(0);
+            
+            if (alarmTime < now) {
+                alarmTime.setDate(alarmTime.getDate() + 1);
+            }
+            
+            // 알람 타이머 설정
+            const timeUntilAlarm = alarmTime - now;
+            alarmTimeout = setTimeout(() => {
+                alarmAudio.play();
+                document.getElementById('alarmModal').style.display = 'block';
+            }, timeUntilAlarm);
+            
+            alert(`알람이 ${alarmTime.toLocaleTimeString()}에 설정되었습니다.`);
+        }
+        
+        function stopAlarm() {
+            alarmAudio.pause();
+            alarmAudio.currentTime = 0;
+            document.getElementById('alarmModal').style.display = 'none';
         }
     </script>
 </body>

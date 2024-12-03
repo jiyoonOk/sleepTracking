@@ -3,8 +3,8 @@ from camera import gen_frames, get_camera
 import atexit
 
 app = Flask(__name__,
-    template_folder='src/templates',    # src/templates 폴더 지정
-    static_folder='src/static'          # src/static 폴더 지정
+    template_folder='src/templates',    
+    static_folder='src/static'          
 )
 
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
