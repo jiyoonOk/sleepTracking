@@ -106,22 +106,28 @@ def measure_temperature_humidity():
 
 def measure_distance():
     """초음파 센서로 거리 측정"""
-    GPIO.output(TRIG, False)
-    time.sleep(0.2)
-    
-    GPIO.output(TRIG, True)
-    time.sleep(0.00001)
-    GPIO.output(TRIG, False)
-    
-    while GPIO.input(ECHO) == 0:
-        pulse_start = time.time()
+    try:
+        GPIO.output(TRIG, False)
+        time.sleep(0.5)
         
-    while GPIO.input(ECHO) == 1:
-        pulse_end = time.time()
+        GPIO.output(TRIG, True)
+        time.sleep(0.00001)
+        GPIO.output(TRIG, False)
         
-    pulse_duration = pulse_end - pulse_start
-    distance = pulse_duration * 17150
-    return round(distance, 2)
+        while GPIO.input(ECHO) == 0:
+            pulse_start = time.time()
+            
+        while GPIO.input(ECHO) == 1:
+            pulse_end = time.time()
+        
+        pulse_duration = pulse_end - pulse_start
+        distance = pulse_duration * 17150
+        distance = round(distance, 2)
+        
+        return distance
+    except Exception as e:
+        print(f"거리 측정 에러: {str(e)}")
+        return None
 
 def controlLED(led_type, brightness):
     """LED 제어 (PWM)"""
@@ -206,4 +212,21 @@ def cleanup():
     led_white_pwm.stop()
     led_yellow_pwm.stop()
     GPIO.cleanup()
+
+def auto_led_control():
+    """초음파 센서 기반 자동 LED 제어"""
+    try:
+        while True:
+            distance = measure_distance()
+            if distance is not None and distance <= 5:  # 5cm 이내 물체 감지
+                controlLED("white", 0)      # 흰색 LED 끄기
+                controlLED("yellow", 100)   # 노란색 LED 100%
+            time.sleep(0.1)  # 0.1초 간격으로 측정
+    except Exception as e:
+        print(f"자동 LED 제어 에러: {str(e)}")
+
+# 자동 LED 제어 스레드 시작
+led_control_thread = threading.Thread(target=auto_led_control)
+led_control_thread.daemon = True
+led_control_thread.start()
 

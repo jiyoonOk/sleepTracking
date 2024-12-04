@@ -195,6 +195,12 @@
                 updateLED('white', 0);
                 updateLED('yellow', 0);
                 
+                // LED 슬라이더 값도 0으로 설정
+                document.getElementById('whiteLED').value = 0;
+                document.getElementById('yellowLED').value = 0;
+                document.getElementById('whiteLEDValue').textContent = '0%';
+                document.getElementById('yellowLEDValue').textContent = '0%';
+                
                 // 타이머 시작
                 startTimer();
                 startSleepMonitoring();
