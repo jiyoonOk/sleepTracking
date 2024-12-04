@@ -52,8 +52,10 @@ client.on_connect = on_connect
 client.on_message = on_message
 
 try:
+	print(f"브로커 연결 시도: {ip}")
 	client.connect(ip, 1883)
 	client.loop_start()
+	print("MQTT 연결 성공!")
 	
 	while True:
 		try:
@@ -69,27 +71,29 @@ try:
 			else:
 				print(f"[{current_time}] 온습도 측정 실패")
 			
-			# 나머지 센서 측정 및 발행
+			# 초음파 센서 측정 및 발행
 			distance = circuit.measure_distance()
 			if distance is not None:
-				client.publish("ultrasonic", distance)
+				client.publish("ultrasonic", str(distance))
 				print(f"[{current_time}] 거리 발행: {distance}cm")
 			
+			# 조도 측정 및 발행
 			light = circuit.measure_light()
 			if light is not None:
-				client.publish("light", light)
+				client.publish("light", str(light))
 				print(f"[{current_time}] 조도 발행: {light}%")
 			
 			print(f"[{current_time}] === 센서 측정 완료 ===")
-			time.sleep(0.2)
+			time.sleep(0.2)  # 1초 간격으로 측정
 			
 		except Exception as e:
-			print(f"[{current_time}] 에러 발생: {str(e)}")
+			print(f"[{current_time}] 센서 측정 중 에러 발생: {str(e)}")
 			print(f"[{current_time}] 에러 타입: {type(e).__name__}")
-			time.sleep(1)
-			
+			time.sleep(0.2)
+			continue  # 에러가 발생해도 계속 실행
+
 except KeyboardInterrupt:
-	print("프로그램 종료")
+	print("\n프로그램 종료")
 	circuit.cleanup()
 	client.loop_stop()
 	client.disconnect()
