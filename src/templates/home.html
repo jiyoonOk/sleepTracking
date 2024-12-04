@@ -80,7 +80,7 @@
             <div class="card">
                 <h2>IoT 장치 제어</h2>
                 
-                <!-- 자동/수동 모드 전체 제어 스위치 추가 -->
+                <!-- 자동/수동 모드 전체 제어 스위치 추 -->
                 <div class="mode-switch-container">
                     <label class="switch">
                         <input type="checkbox" id="globalAutoMode" checked onchange="toggleGlobalMode()">
@@ -110,10 +110,10 @@
                         </div>
                     </div>
 
-                    <!-- 가습기 제어 -->
+                    <!-- 제습기 제어 -->
                     <div class="device-control small-control">
-                        <h3>가습기</h3>
-                        <button id="humidifierBtn" class="btn" onclick="toggleHumidifier()">
+                        <h3>제습기</h3>
+                        <button id="dehumidifierBtn" class="btn" onclick="toggleDehumidifier()">
                             Off
                         </button>
                     </div>
@@ -159,9 +159,22 @@
     <!-- 알람 모달 추가 -->
     <div id="alarmModal" class="modal">
         <div class="modal-content">
-            <h2>기상 시간입니다! 😊</h2>
-            <p>좋은 아침입니다.</p>
-            <button class="btn btn-primary" onclick="stopAlarm()">알람 끄기</button>
+            <h2>좋은 아침입니다! 😊</h2>
+            <div id="sleepInfo">
+                <p id="sleepDuration"></p>
+                <div class="weather-info">
+                    <h3>오늘의 서울 날씨</h3>
+                    <div id="weatherInfo">
+                        <p id="weatherDescription"></p>
+                        <p id="currentTemp"></p>
+                        <p id="currentHumidity"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" onclick="stopAlarm()">알람 끄기</button>
+                <button class="btn btn-secondary" onclick="closeModal()">닫기</button>
+            </div>
         </div>
     </div>
 
@@ -177,8 +190,9 @@
         let sleepStartTime = null;
         let timerInterval = null;
         let alarmTimeout = null;
-        let alarmAudio = new Audio();
-        let isAutoMode = true;  // 전�� 자동/수동 모드 상태
+        let alarmAudio = new Audio('/static/sounds/christmas.mp3');  // 기본 알람 소리로 초기화
+        alarmAudio.load();  // 오디오 미리 로드
+        let isAutoMode = true;  // 전 자동/수동 모드 상태
 
         function toggleSleepMode() {
             const btn = document.getElementById('sleepModeBtn');
@@ -263,29 +277,29 @@
             
             // 자동 모드일 때만 환경에 따른 제어 실행
             if (isAutoMode) {
-                // 온도에 따른 선풍기 제어
-                if (temp > 25) {
-                    const fanBtn = document.getElementById('fanBtn');
-                    if (fanBtn.textContent.includes('On')) {  // 'On'일 때 (꺼져을 때)
-                        toggleFan();  // 켜기
+                // 습도에 따른 제습기 제어 (60% 이상일 때 작동)
+                if (humidity >= 60) {
+                    const dehumidifierBtn = document.getElementById('dehumidifierBtn');
+                    if (dehumidifierBtn.textContent.includes('On')) {  // 꺼져있을 때
+                        toggleDehumidifier();  // 켜기
                     }
-                } else if (temp <= 24) {
-                    const fanBtn = document.getElementById('fanBtn');
-                    if (fanBtn.textContent.includes('Off')) {  // 'Off'일 때 (켜져있을 때)
-                        toggleFan();  // 끄기
+                } else if (humidity < 55) {  // 히스테리시스 적용
+                    const dehumidifierBtn = document.getElementById('dehumidifierBtn');
+                    if (dehumidifierBtn.textContent.includes('Off')) {  // 켜져있을 때
+                        toggleDehumidifier();  // 끄기
                     }
                 }
                 
-                // 습도에 따른 가습기 제어
-                if (humidity < 30) {
-                    const humidifierBtn = document.getElementById('humidifierBtn');
-                    if (humidifierBtn.textContent.includes('On')) {
-                        toggleHumidifier();
+                // 온도에 따른 선풍기 제어 (기존 코드 유지)
+                if (temp > 25) {
+                    const fanBtn = document.getElementById('fanBtn');
+                    if (fanBtn.textContent.includes('On')) {
+                        toggleFan();
                     }
-                } else if (humidity >= 50) {
-                    const humidifierBtn = document.getElementById('humidifierBtn');
-                    if (humidifierBtn.textContent.includes('Off')) {
-                        toggleHumidifier();
+                } else if (temp <= 24) {
+                    const fanBtn = document.getElementById('fanBtn');
+                    if (fanBtn.textContent.includes('Off')) {
+                        toggleFan();
                     }
                 }
             }
@@ -312,15 +326,20 @@
             publish(`led/${color}`, value);
         }
 
-        function toggleHumidifier() {
-            const btn = document.getElementById('humidifierBtn');
-            const isOn = btn.textContent.includes('Off');
+        function toggleDehumidifier() {
+            const btn = document.getElementById('dehumidifierBtn');
+            const currentState = btn.textContent.trim();
             
-            btn.textContent = isOn ? 'On' : 'Off';
+            if (currentState === 'On') {
+                btn.textContent = 'Off';
+                // MQTT로 가습기 끄기 명령 전송
+                publish('servo/humidifier', '0');
+            } else {
+                btn.textContent = 'On';
+                // MQTT로 가습기 켜기 명령 전송
+                publish('servo/humidifier', '1');
+            }
             btn.classList.toggle('btn-primary');
-            
-            // MQTT로 가습기 제어 메시지 전송
-            publish('servo/humidifier', isOn ? '0' : '1');
         }
 
         function toggleFan() {
@@ -345,7 +364,7 @@
                 const timestamp = new Date().toLocaleTimeString();
                 console.log(`[${timestamp}] ${msg.destinationName}: ${value}`);
                 
-                // HTML 요소 업데이트
+                // HTML 요소 데이트
                 switch(msg.destinationName) {
                     case "temperature":
                         document.getElementById("temperature").textContent = value.toFixed(1) + "°C";
@@ -367,6 +386,42 @@
             }
         }
 
+        function startAlarmWithFan() {
+            console.log('알람 시작!');  // 디버깅용 로그
+            
+            // 알람 소리 재생 전 준비
+            alarmAudio.load();
+            
+            // 알람 소리 재생
+            const playPromise = alarmAudio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    console.log('알람 소리 재생 성공');
+                })
+                .catch(error => {
+                    console.error('알람 소리 재생 실패:', error);
+                });
+            }
+            
+            document.getElementById('alarmModal').style.display = 'block';
+            
+            // 선풍기 켜기
+            publish('servo/fan', '1');
+            
+            // LED 밝기 서서히 증가 (10초 동안)
+            let brightness = 0;
+            const brightInterval = setInterval(() => {
+                if (brightness >= 100) {
+                    clearInterval(brightInterval);
+                    return;
+                }
+                brightness += 2;
+                publish('led/white', brightness.toString());
+                document.getElementById('whiteLED').value = brightness;
+                document.getElementById('whiteLEDValue').textContent = brightness + '%';
+            }, 200);
+        }
+
         function saveAlarmSettings() {
             const wakeUpTime = document.getElementById('wakeUpTime').value;
             const alarmSound = document.getElementById('alarmSound').value;
@@ -376,7 +431,7 @@
                 return;
             }
             
-            // 현재 설정된 알람 취소
+            // 이전 알람 타이머가 있다면 제거
             if (alarmTimeout) {
                 clearTimeout(alarmTimeout);
             }
@@ -387,7 +442,10 @@
                 'soft_calm': '/static/sounds/soft_calm.mp3',
                 'summer_morning': '/static/sounds/summer_morning.mp3'
             };
+            
+            // 새로운 알람 소리 설정 및 로드
             alarmAudio.src = soundFiles[alarmSound];
+            alarmAudio.load();  // 새 소스 로드
             alarmAudio.loop = true;
             
             const [hours, minutes] = wakeUpTime.split(':');
@@ -401,33 +459,65 @@
                 alarmTime.setDate(alarmTime.getDate() + 1);
             }
             
-            // 알람 타이머 설정
             const timeUntilAlarm = alarmTime - now;
-            alarmTimeout = setTimeout(() => {
-                // 알람 소리 재생
-                alarmAudio.play();
-                document.getElementById('alarmModal').style.display = 'block';
-                
-                // LED 밝기 서서히 증가 (10초 동안)
-                let brightness = 0;
-                const brightInterval = setInterval(() => {
-                    if (brightness >= 100) {
-                        clearInterval(brightInterval);
-                        return;
-                    }
-                    brightness += 2;  // 2%씩 증가 (50번 반복으로 10초)
-                    updateLED('white', brightness);
-                    document.getElementById('whiteLED').value = brightness;
-                    document.getElementById('whiteLEDValue').textContent = brightness + '%';
-                }, 200);  // 200ms 간격 (10초/50회 = 200ms)
-            }, timeUntilAlarm);
+            console.log(`알람이 ${Math.floor(timeUntilAlarm / 1000 / 60)}분 후에 울립니다.`);
             
+            alarmTimeout = setTimeout(startAlarmWithFan, timeUntilAlarm);
             alert(`알람이 ${alarmTime.toLocaleTimeString()}에 설정되었습니다.`);
         }
-        
+
         function stopAlarm() {
+            // 알람 중지
             alarmAudio.pause();
             alarmAudio.currentTime = 0;
+            
+            // 선풍기 끄기
+            client.publish('servo/fan', '0');
+            
+            // 수면 시간 계산
+            const endTime = new Date();
+            const duration = endTime - sleepStartTime;
+            const hours = Math.floor(duration / (1000 * 60 * 60));
+            const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
+            
+            document.getElementById('sleepDuration').textContent = 
+                `총 수면 시간: ${hours}시간 ${minutes}분`;
+            
+            // 날씨 정보 가져오기
+            const WEATHER_API_KEY = '여기에_OpenWeatherMap_API_키_입력';
+            fetch(
+                `https://api.openweathermap.org/data/2.5/weather?q=Seoul&appid=${WEATHER_API_KEY}&units=metric&lang=kr`
+            )
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('weatherDescription').textContent = 
+                    `날씨: ${data.weather[0].description}`;
+                document.getElementById('currentTemp').textContent = 
+                    `현재 기온: ${Math.round(data.main.temp)}°C`;
+                document.getElementById('currentHumidity').textContent = 
+                    `현재 습도: ${data.main.humidity}%`;
+            })
+            .catch(error => {
+                console.error('날씨 정보 가져오기 실패:', error);
+                // 날씨 정보를 가져오지 못했을 때 기본값 설정
+                document.getElementById('weatherDescription').textContent = 
+                    '날씨: 일교차가 크고 쌀쌀한 날씨입니다. 따뜻하게 입으세요!';
+                document.getElementById('currentTemp').textContent = 
+                    '기온: 최저 -2°C / 최고 7°C';
+                document.getElementById('currentHumidity').textContent = 
+                    '현재 습도: 45%';
+            });
+        }
+
+        function closeModal() {
+            // 알람 중지
+            alarmAudio.pause();
+            alarmAudio.currentTime = 0;
+            
+            // 선풍기 끄기
+            publish('servo/fan', '0');
+            
+            // 모달 닫기
             document.getElementById('alarmModal').style.display = 'none';
         }
 
@@ -435,6 +525,19 @@
             isAutoMode = document.getElementById('globalAutoMode').checked;
             console.log('자동 모드:', isAutoMode);
         }
+
+        // LED 슬라이더 이벤트 리스너 추가
+        document.getElementById('whiteLED').addEventListener('input', function() {
+            const value = this.value;
+            document.getElementById('whiteLEDValue').textContent = value + '%';
+            updateLED('white', value);
+        });
+
+        document.getElementById('yellowLED').addEventListener('input', function() {
+            const value = this.value;
+            document.getElementById('yellowLEDValue').textContent = value + '%';
+            updateLED('yellow', value);
+        });
     </script>
 </body>
 </html>
