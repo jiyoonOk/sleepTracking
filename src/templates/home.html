@@ -178,7 +178,7 @@
         let timerInterval = null;
         let alarmTimeout = null;
         let alarmAudio = new Audio();
-        let isAutoMode = true;  // 전역 자동/수동 모드 상태
+        let isAutoMode = true;  // 전�� 자동/수동 모드 상태
 
         function toggleSleepMode() {
             const btn = document.getElementById('sleepModeBtn');
@@ -388,9 +388,8 @@
                 'summer_morning': '/static/sounds/summer_morning.mp3'
             };
             alarmAudio.src = soundFiles[alarmSound];
-            alarmAudio.loop = true;  // 알람 소리 반복 재생
+            alarmAudio.loop = true;
             
-            // 알람 시간 설정 (기존 코드와 동일)
             const [hours, minutes] = wakeUpTime.split(':');
             const now = new Date();
             const alarmTime = new Date();
@@ -405,8 +404,22 @@
             // 알람 타이머 설정
             const timeUntilAlarm = alarmTime - now;
             alarmTimeout = setTimeout(() => {
+                // 알람 소리 재생
                 alarmAudio.play();
                 document.getElementById('alarmModal').style.display = 'block';
+                
+                // LED 밝기 서서히 증가 (10초 동안)
+                let brightness = 0;
+                const brightInterval = setInterval(() => {
+                    if (brightness >= 100) {
+                        clearInterval(brightInterval);
+                        return;
+                    }
+                    brightness += 2;  // 2%씩 증가 (50번 반복으로 10초)
+                    updateLED('white', brightness);
+                    document.getElementById('whiteLED').value = brightness;
+                    document.getElementById('whiteLEDValue').textContent = brightness + '%';
+                }, 200);  // 200ms 간격 (10초/50회 = 200ms)
             }, timeUntilAlarm);
             
             alert(`알람이 ${alarmTime.toLocaleTimeString()}에 설정되었습니다.`);
