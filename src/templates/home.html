@@ -24,111 +24,129 @@
     </header>
     
     <main class="container dashboard-grid">
-        <div class="status-panel">
-            <h2>현재 상태</h2>
-            <div class="status-grid">
-                <div class="status-item">
-                    <h3>온도</h3>
-                    <p id="temperature">--°C</p>
+        <div class="first-row">
+            <!-- 현재 상태 패널 -->
+            <div class="status-panel">
+                <h2>현재 상태</h2>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <h3>온도</h3>
+                        <p id="temperature">--°C</p>
+                    </div>
+                    <div class="status-item">
+                        <h3>습도</h3>
+                        <p id="humidity">--%</p>
+                    </div>
+                    <div class="status-item">
+                        <h3>조도</h3>
+                        <p id="light">--lux</p>
+                    </div>
                 </div>
-                <div class="status-item">
-                    <h3>습도</h3>
-                    <p id="humidity">--%</p>
-                </div>
-                <div class="status-item">
-                    <h3>조도</h3>
-                    <p id="light">--lux</p>
+                <div class="alert alert-warning">
+                    <p>💡 현재 온도가 적정 범위를 벗어났습니다. 19°C로 설정하는 것을 추천합니다.</p>
                 </div>
             </div>
-            <div class="alert alert-warning">
-                <p>💡 현재 온도가 적정 범위를 벗어났습니다. 19°C로 설정하는 것을 추천합니다.</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>수면 모드 제어</h2>
-            <button id="sleepModeBtn" class="btn btn-primary btn-large" onclick="toggleSleepMode()">
-                수면 모드 활성화
-            </button>
-            <div class="sleep-mode-message">
-                <p>수면 환경을 모니터링 중입니다.</p>
-                <div class="sleep-timer" id="sleepTimer">00:00:00</div>
-            </div>
-            <div class="wake-up-settings">
-                <div class="time-setting">
-                    <label>기상 시간</label>
-                    <input type="time" id="wakeUpTime">
-                </div>
-                <div class="alarm-setting">
-                    <label>알람 소리</label>
-                    <select id="alarmSound">
-                        <option value="christmas">크리스마스 멜로디</option>
-                        <option value="soft_calm">잔잔한 음악</option>
-                        <option value="summer_morning">상쾌한 아침</option>
-                    </select>
-                </div>
-                <button id="saveAlarmBtn" class="btn btn-primary" onclick="saveAlarmSettings()">
-                    알람 설정 저장
-                </button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h2>IoT 장치 제어</h2>
             
-            <!-- LED 제어 -->
-            <div class="device-control">
-                <h3>조명 제어</h3>
-                <div class="control-group">
-                    <div class="led-control">
-                        <label>흰색 LED</label>
-                        <input type="range" id="whiteLED" min="0" max="100" value="0" 
-                            oninput="updateLED('white', this.value)">
-                        <span id="whiteLEDValue">0%</span>
+            <!-- 수면 모드 제어 -->
+            <div class="card">
+                <h2>수면 모드 제어</h2>
+                <button id="sleepModeBtn" class="btn btn-primary btn-large" onclick="toggleSleepMode()">
+                    수면 모드 활성화
+                </button>
+                <div class="sleep-mode-message">
+                    <p>수면 환경을 모니터링 중입니다.</p>
+                    <div class="sleep-timer" id="sleepTimer">00:00:00</div>
+                </div>
+                <div class="wake-up-settings">
+                    <div class="time-setting">
+                        <label>기상 시간</label>
+                        <input type="time" id="wakeUpTime">
                     </div>
-                    <div class="led-control">
-                        <label>노란색 LED</label>
-                        <input type="range" id="yellowLED" min="0" max="100" value="0" 
-                            oninput="updateLED('yellow', this.value)">
-                        <span id="yellowLEDValue">0%</span>
+                    <div class="alarm-setting">
+                        <label>알람 소리</label>
+                        <select id="alarmSound">
+                            <option value="christmas">크리스마스 멜로디</option>
+                            <option value="soft_calm">잔잔한 음악</option>
+                            <option value="summer_morning">상쾌한 아침</option>
+                        </select>
                     </div>
+                    <button id="saveAlarmBtn" class="btn btn-primary" onclick="saveAlarmSettings()">
+                        알람 설정 저장
+                    </button>
                 </div>
             </div>
+            
+            <!-- IoT 장치 제어 -->
+            <div class="card">
+                <h2>IoT 장치 제어</h2>
+                
+                <!-- 자동/수동 모드 전체 제어 스위치 추가 -->
+                <div class="mode-switch-container">
+                    <label class="switch">
+                        <input type="checkbox" id="globalAutoMode" checked onchange="toggleGlobalMode()">
+                        <span class="slider round"></span>
+                    </label>
+                    <span>자동 제어 모드</span>
+                </div>
+                
+                <!-- 기존 장치 제어 부분 -->
+                <div class="device-controls">
+                    <!-- LED 제어 -->
+                    <div class="device-control">
+                        <h3>조명 제어</h3>
+                        <div class="control-group">
+                            <div class="led-control">
+                                <label>흰색 LED</label>
+                                <input type="range" id="whiteLED" min="0" max="100" value="0" 
+                                    oninput="updateLED('white', this.value)">
+                                <span id="whiteLEDValue">0%</span>
+                            </div>
+                            <div class="led-control">
+                                <label>노란색 LED</label>
+                                <input type="range" id="yellowLED" min="0" max="100" value="0" 
+                                    oninput="updateLED('yellow', this.value)">
+                                <span id="yellowLEDValue">0%</span>
+                            </div>
+                        </div>
+                    </div>
 
-            <!-- 가습기 제어 -->
-            <div class="device-control small-control">
-                <h3>가습기</h3>
-                <button id="humidifierBtn" class="btn" onclick="toggleHumidifier()">
-                    On
-                </button>
-            </div>
+                    <!-- 가습기 제어 -->
+                    <div class="device-control small-control">
+                        <h3>가습기</h3>
+                        <button id="humidifierBtn" class="btn" onclick="toggleHumidifier()">
+                            Off
+                        </button>
+                    </div>
 
-            <!-- 선풍기 제어 -->
-            <div class="device-control small-control">
-                <h3>선풍기</h3>
-                <button id="fanBtn" class="btn" onclick="toggleFan()">
-                    On
-                </button>
+                    <!-- 선풍기 제어 -->
+                    <div class="device-control small-control">
+                        <h3>선풍기</h3>
+                        <button id="fanBtn" class="btn" onclick="toggleFan()">
+                            On
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
-
-        <div class="dashboard-grid sleep-mode-components" style="display: none;">
+        
+        <div class="second-row">
             <!-- 실시간 수면 분석 그래프 -->
-            <div class="card">
-                <h2>수면 상태 분석</h2>
-                <div class="chart-container">
-                    <canvas id="sleepChart"></canvas>
+            <div class="sleep-mode-components" style="display: none;">
+                <div class="card">
+                    <h2>수면 상태 분석</h2>
+                    <div class="chart-container">
+                        <canvas id="sleepChart"></canvas>
+                    </div>
                 </div>
             </div>
-
+            
             <!-- CCTV 화면 -->
-            <div class="card">
+            <div class="card cctv-card">
                 <h2>CCTV 모니터링</h2>
                 <div class="cctv-container">
                     <img id="cctvFeed" src="/video_feed" alt="CCTV 피드">
                 </div>
             </div>
-
         </div>
     </main>
 
@@ -160,6 +178,7 @@
         let timerInterval = null;
         let alarmTimeout = null;
         let alarmAudio = new Audio();
+        let isAutoMode = true;  // 전역 자동/수동 모드 상태
 
         function toggleSleepMode() {
             const btn = document.getElementById('sleepModeBtn');
@@ -235,58 +254,33 @@
         function checkEnvironment() {
             const temp = parseFloat(document.getElementById('temperature').textContent);
             const humidity = parseFloat(document.getElementById('humidity').textContent);
-            const alertDiv = document.querySelector('.alert');
             
-            // 온도와 습도 상태 확인
-            let message = '';
-            
-            // 온도 체크
-            if (temp < 15 || temp > 22.5) {
-                const recommendTemp = 19;
-                message = `💡 현재 온도가 적정 범위를 벗어났습니다. ${recommendTemp}°C로 설정하는 것을 추천합니다.`;
-                alertDiv.className = 'alert alert-warning';
-            }
-            
-            // 습도 체크
-            if (humidity < 30 || humidity > 60) {
-                const recommendHumidity = 45;
-                if (message) message += '<br>';
-                message += `💡 현재 습도가 적정 범위를 벗어났습니다. ${recommendHumidity}%로 설정하는 것을 추천합니다.`;
-                alertDiv.className = 'alert alert-warning';
-            }
-            
-            // 모든 조건이 정상일 때
-            if (!message) {
-                message = '✨ 현재 실내 환경이 쾌적합니다.';
-                alertDiv.className = 'alert alert-success';
-            }
-            
-            alertDiv.innerHTML = `<p>${message}</p>`;
-            
-            // 자동 제어 로직
-            // 온도에 따른 선풍기 제어
-            if (temp > 25) {
-                const fanBtn = document.getElementById('fanBtn');
-                if (fanBtn.textContent.includes('On')) {
-                    toggleFan();
+            // 자동 모드일 때만 환경에 따른 제어 실행
+            if (isAutoMode) {
+                // 온도에 따른 선풍기 제어
+                if (temp > 25) {
+                    const fanBtn = document.getElementById('fanBtn');
+                    if (fanBtn.textContent.includes('On')) {  // 'On'일 때 (꺼져을 때)
+                        toggleFan();  // 켜기
+                    }
+                } else if (temp <= 24) {
+                    const fanBtn = document.getElementById('fanBtn');
+                    if (fanBtn.textContent.includes('Off')) {  // 'Off'일 때 (켜져있을 때)
+                        toggleFan();  // 끄기
+                    }
                 }
-            } else if (temp <= 24) {
-                const fanBtn = document.getElementById('fanBtn');
-                if (fanBtn.textContent.includes('Off')) {
-                    toggleFan();
-                }
-            }
-            
-            // 습도에 따른 가습기 제어
-            if (humidity < 30) {
-                const humidifierBtn = document.getElementById('humidifierBtn');
-                if (humidifierBtn.textContent.includes('On')) {
-                    toggleHumidifier();
-                }
-            } else if (humidity >= 50) {
-                const humidifierBtn = document.getElementById('humidifierBtn');
-                if (humidifierBtn.textContent.includes('Off')) {
-                    toggleHumidifier();
+                
+                // 습도에 따른 가습기 제어
+                if (humidity < 30) {
+                    const humidifierBtn = document.getElementById('humidifierBtn');
+                    if (humidifierBtn.textContent.includes('On')) {
+                        toggleHumidifier();
+                    }
+                } else if (humidity >= 50) {
+                    const humidifierBtn = document.getElementById('humidifierBtn');
+                    if (humidifierBtn.textContent.includes('Off')) {
+                        toggleHumidifier();
+                    }
                 }
             }
         }
@@ -355,7 +349,7 @@
                     case "humidity":
                         document.getElementById("humidity").textContent = value.toFixed(1) + "%";
                         addChartData(1, value);
-                        checkEnvironment(); // 환경 체크 추가
+                        checkEnvironment(); // 환경 크 추가
                         break;
                     case "light":
                         document.getElementById("light").textContent = value.toFixed(1) + "%";
@@ -416,6 +410,11 @@
             alarmAudio.pause();
             alarmAudio.currentTime = 0;
             document.getElementById('alarmModal').style.display = 'none';
+        }
+
+        function toggleGlobalMode() {
+            isAutoMode = document.getElementById('globalAutoMode').checked;
+            console.log('자동 모드:', isAutoMode);
         }
     </script>
 </body>

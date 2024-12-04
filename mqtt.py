@@ -39,11 +39,11 @@ def on_message(client, userdata, msg):
 		brightness = int(payload)
 		circuit.controlLED("yellow", brightness)
 	elif topic == "servo/humidifier":
-		angle = 180 if payload == "1" else 0
-		circuit.control_servo(angle)
+		power = int(payload)
+		circuit.control_humidifier(power)
 	elif topic == "servo/fan":
-		angle = 180 if payload == "1" else 0
-		circuit.control_servo(angle)
+		power = int(payload)
+		circuit.control_fan(power)
 
 ip = "172.20.10.5"  # localhost 대신 실제 브로커 IP 사용
 
@@ -94,6 +94,22 @@ try:
 
 except KeyboardInterrupt:
 	print("\n프로그램 종료")
+	# 모든 장치 끄기
+	circuit.control_humidifier(0)  # 가습기 끄기
+	circuit.controlLED("white", 0)  # 흰색 LED 끄기
+	circuit.controlLED("yellow", 0)  # 노란색 LED 끄기
+	circuit.control_fan(0)  # 선풍기 끄기
+	circuit.cleanup()  # GPIO 정리
+	client.loop_stop()
+	client.disconnect()
+
+except Exception as e:
+	print(f"예기치 않은 오류: {str(e)}")
+	# 여기서도 장치들을 끄고 정리
+	circuit.control_humidifier(0)
+	circuit.controlLED("white", 0)
+	circuit.controlLED("yellow", 0)
+	circuit.control_fan(0)
 	circuit.cleanup()
 	client.loop_stop()
 	client.disconnect()

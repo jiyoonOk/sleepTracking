@@ -16,8 +16,12 @@ def index():
 @app.route('/video_feed')
 def video_feed():
     """비디오 스트리밍 라우트"""
-    return Response(gen_frames(),
+    try:
+        return Response(gen_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
+    except Exception as e:
+        print(f"비디오 피드 에러: {str(e)}")
+        return "비디오 스트림을 시작할 수 없습니다.", 500
 
 @app.route('/dashboard')
 def dashboard():

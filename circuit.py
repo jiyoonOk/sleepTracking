@@ -4,6 +4,7 @@ import RPi.GPIO as GPIO
 import Adafruit_MCP3008
 from adafruit_htu21d import HTU21D
 import busio
+import threading
 
 # GPIO 설정
 GPIO.setmode(GPIO.BCM)
@@ -24,6 +25,12 @@ LED_YELLOW = 6
 GPIO.setup(LED_WHITE, GPIO.OUT)
 GPIO.setup(LED_YELLOW, GPIO.OUT)
 
+# LED PWM 객체 전역 설정
+led_white_pwm = GPIO.PWM(LED_WHITE, 100)
+led_yellow_pwm = GPIO.PWM(LED_YELLOW, 100)
+led_white_pwm.start(0)
+led_yellow_pwm.start(0)
+
 # 스위치 설정
 SWITCH = 21
 GPIO.setup(SWITCH, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -34,26 +41,19 @@ ECHO = 16
 GPIO.setup(TRIG, GPIO.OUT)
 GPIO.setup(ECHO, GPIO.IN)
 
-# 서보모터 설정
-SERVO = 18
-GPIO.setup(SERVO, GPIO.OUT)
-servo_pwm = GPIO.PWM(SERVO, 50)  # 50Hz PWM
-servo_pwm.start(0)
+# 선풍기용 서보모터 설정
+SERVO_FAN = 12  # GPIO 12번 핀 사용
+GPIO.setup(SERVO_FAN, GPIO.OUT)
+fan_pwm = GPIO.PWM(SERVO_FAN, 50)  # 50Hz PWM
+fan_pwm.start(0)
 
-# LED PWM 객체 전역 설정
-led_white_pwm = GPIO.PWM(LED_WHITE, 100)
-led_yellow_pwm = GPIO.PWM(LED_YELLOW, 100)
-led_white_pwm.start(0)
-led_yellow_pwm.start(0)
+# DC 모터 설정 (가습기용)
+HUMIDIFIER = 26
+GPIO.setup(HUMIDIFIER, GPIO.OUT)
 
-def read_adc(channel):
-    """MCP3202에서 아날로그 값을 읽어오는 함수"""
-    if channel != 0:
-        raise ValueError('Channel must be 0')
-    
-    r = spi.xfer2([1, (2+channel)<<6, 0])
-    adc_out = ((r[1]&15) << 8) + r[2]
-    return adc_out
+# 전역 변수로 선풍기 상태 추가
+fan_running = False
+fan_thread = None
 
 def measure_light():
     """조도 센서 값 읽기 (0-100%)"""
@@ -82,7 +82,7 @@ def getTemperature(sensor):
     return temp
 
 def getHumidity(sensor):
-    """센서로부터 습도 값 수신 함수"""
+    """센서로부터 습도 값 신 함수"""
     humid = float(sensor.relative_humidity)
     print(f"현재 습도는 {humid:.1f}%")
     return humid
@@ -138,18 +138,72 @@ def controlLED(led_type, brightness):
     except Exception as e:
         print(f"LED control error: {e}")
 
-def control_servo(angle):
-    """서모터 각도 제어 (0-180도)"""
-    duty = (angle / 18.0) + 2.5
-    servo_pwm.ChangeDutyCycle(duty)
-    time.sleep(0.3)
-    servo_pwm.ChangeDutyCycle(0)  # 서보 떨림 방지
+def fan_rotation():
+    """선풍기 회전 함수 - 별도 스레드에서 실행"""
+    global fan_running
+    while fan_running:
+        # 0도에서 180도까지
+        for angle in range(0, 180, 5):
+            if not fan_running:
+                break
+            duty = (angle / 18.0) + 2.5
+            fan_pwm.ChangeDutyCycle(duty)
+            time.sleep(0.05)
+        # 180도에서 0도까지
+        for angle in range(180, 0, -5):
+            if not fan_running:
+                break
+            duty = (angle / 18.0) + 2.5
+            fan_pwm.ChangeDutyCycle(duty)
+            time.sleep(0.05)
+
+def control_fan(power):
+    """선풍기(서보모터) 제어 함수
+    power: 1이면 켜짐(연속 회전), 0이면 꺼짐
+    """
+    global fan_running, fan_thread
+    
+    try:
+        if power == 1:
+            # 선풍기 켜기
+            fan_running = True
+            fan_thread = threading.Thread(target=fan_rotation)
+            fan_thread.daemon = True  # 메인 프로그램 종료시 스레드도 종료
+            fan_thread.start()
+        else:
+            # 선풍기 끄기
+            fan_running = False
+            if fan_thread:
+                fan_thread.join(timeout=1)  # 스레드 종료 대기
+            fan_pwm.ChangeDutyCycle(2.5)  # 0도
+            time.sleep(0.5)
+            fan_pwm.ChangeDutyCycle(0)
+            
+    except Exception as e:
+        print(f"선풍기 제어 에러: {str(e)}")
+
+def control_humidifier(power):
+    """가습기(DC 모터) 제어 함수
+    power: 1이면 켜짐, 0이면 꺼짐
+    """
+    try:
+        print(f"가습기 제어: power = {power}")
+        if power == 1:
+            # 가습기 켜기
+            GPIO.output(HUMIDIFIER, GPIO.HIGH)  # HIGH로 변경
+            print("가습기 켜짐")
+        else:
+            # 가습기 끄기
+            GPIO.output(HUMIDIFIER, GPIO.LOW)   # LOW로 변경
+            print("가습기 꺼짐")
+            
+    except Exception as e:
+        print(f"가습기 제어 에러: {str(e)}")
 
 def cleanup():
     """프로그램 종료 시 GPIO 정리"""
-    servo_pwm.stop()
+    fan_pwm.stop()
     led_white_pwm.stop()
     led_yellow_pwm.stop()
     GPIO.cleanup()
-    spi.close()
 

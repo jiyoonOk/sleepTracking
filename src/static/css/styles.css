@@ -136,10 +136,65 @@ body.sleep-mode {
 
 /* 대시보드 그리드 레이아웃 */
 .dashboard-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
-    margin: 2rem 0;
+    padding: 1.5rem;
+}
+
+/* 첫 번째 줄 컨테이너 */
+.first-row {
+    display: flex;
+    gap: 1.5rem;
+    width: 100%;
+}
+
+/* 첫 번째 줄의 각 카드 스타일 */
+.first-row > div {
+    flex: 1;
+    min-width: 0;
+}
+
+/* 두 번째 줄 컨테이너 */
+.second-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+    .first-row {
+        flex-direction: column;
+    }
+    .second-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 수면 모드가 활성화되었을 때 CCTV 카드 위치 */
+.sleep-mode .second-row {
+    grid-template-columns: 2fr 1fr;
+}
+
+/* CCTV 카드 스타일 */
+.cctv-card {
+    height: fit-content;
+}
+
+/* 상태 패널과 수면 모드 제어는 왼쪽 열 차지 */
+.status-panel,
+.card:not(.cctv-card) {
+    grid-column: 1;
+}
+
+/* CCTV 카드는 항상 오른쪽 열에 고정 */
+.cctv-card {
+    grid-column: 2;
+    grid-row: 1 / span 3;  /* 세로로 3칸 차지 */
+    align-self: start;     /* 상단에 고정 */
+    position: sticky;      /* 스크롤 시에도 고정 */
+    top: 1.5rem;
 }
 
 /* 상태 표시 컴포넌트 */
@@ -395,29 +450,22 @@ body.sleep-mode {
 /* 수면 모드 컴포넌트 스타일 */
 .sleep-mode-components {
     display: none;
-    width: 100%;  /* 전체 너비 사용 */
+    width: 100%;
+}
+
+/* 수면 모드일 때 그리드 레이아웃 */
+.second-row {
+    display: grid;
     grid-template-columns: 2fr 1fr;  /* 2:1 비율로 설정 */
     gap: 1.5rem;
-    margin: 0;  /* 마진 제거 */
 }
 
-/* 대시보드 그리드에서 수면 모드 컴포넌트가 있을 때의 스타일 */
-.dashboard-grid .sleep-mode-components {
-    grid-column: 1 / -1;  /* 전체 너비 사용 */
+/* CCTV 카드 스타일 */
+.cctv-card {
+    height: fit-content;
 }
 
-/* 수면 상태 분석과 CCTV 모니터링을 한 줄로 표시 */
-.sleep-mode-components .card:nth-child(1),
-.sleep-mode-components .card:nth-child(2) {
-    grid-column: span 1;  /* 각각 한 칸씩 차지 */
-}
-
-/* IoT 상태는 전체 너비 사용 */
-.sleep-mode-components .card:nth-child(3) {
-    grid-column: 1 / -1;  /* 전체 너비 사용 */
-}
-
-/* CCTV 컨테이너와 차트 컨테이너의 높이 통일 */
+/* 차트와 CCTV 컨테이너 높이 통일 */
 .cctv-container,
 .chart-container {
     height: 400px;
@@ -426,12 +474,8 @@ body.sleep-mode {
 
 /* 반응형 디자인 */
 @media (max-width: 768px) {
-    .sleep-mode-components {
+    .second-row {
         grid-template-columns: 1fr;  /* 모바일에서는 한 열로 표시 */
-    }
-    
-    .sleep-mode-components .card {
-        grid-column: 1 / -1;  /* 모든 카드가 전체 너비 사용 */
     }
 }
 
@@ -540,4 +584,17 @@ body.sleep-mode {
 
 .modal-content .btn {
     margin-top: 1rem;
+}
+
+.mode-switch-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 10px;
+    background-color: #f5f5f5;
+    border-radius: 8px;
+}
+
+.mode-switch-container .switch {
+    margin-right: 10px;
 }

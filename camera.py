@@ -48,19 +48,33 @@ class Camera:
     def __del__(self):
         self.camera.release()
 
+# 전역 카메라 객체
 camera = None
 
 def get_camera():
     global camera
     if camera is None:
-        camera = Camera()
+        try:
+            camera = Camera()
+        except Exception as e:
+            print(f"카메라 초기화 에러: {str(e)}")
     return camera
 
 def gen_frames():
-    cam = get_camera()
+    global camera
+    if camera is None:
+        camera = get_camera()
+    
     while True:
-        frame = cam.get_frame()
-        if frame is not None:
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-        time.sleep(0.05)
+        try:
+            frame = camera.get_frame()
+            if frame is not None:
+                yield (b'--frame\r\n'
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+            else:
+                print("프레임을 가져올 수 없습니다.")
+                time.sleep(0.1)
+        except Exception as e:
+            print(f"프레임 생성 중 에러: {str(e)}")
+            time.sleep(0.1)
+            continue
